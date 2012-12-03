@@ -242,3 +242,8 @@ Install Git:
 ```
 brew install git
 ```
+
+Documentation
+=============
+
+For more information, please view the [Liftoff Wiki](https://github.com/intuit/liftoff/wiki).
