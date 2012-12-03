@@ -31,7 +31,7 @@ Clone Liftoff
 -------------
 
 ```
-git clone https://github.com/brettweavnet/liftoff
+git clone https://github.com/intuit/liftoff
 ```
 
 From within the cloned directory, run bundle.
