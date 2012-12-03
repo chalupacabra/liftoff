@@ -14,6 +14,7 @@ Technologies
 * [Simple Deploy](https://github.com/intuit/simple_deploy)
 * [Ruby](http://www.ruby-lang.org/en/) (see Appendix for OSX installation instructions)
 * [Git](http://git-scm.com/) (see Appendix for OSX installation instructions)
+* [Data Bags](http://wiki.opscode.com/display/chef/Data+Bags)
 
 Prerequisites
 =============

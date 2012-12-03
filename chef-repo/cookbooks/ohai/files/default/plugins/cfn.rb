@@ -19,8 +19,6 @@ class CfnMetadataLoader
     cmd << "-s #{stack_name} "
     cmd << "-r #{resource_name} "
     cmd << "--region #{region} "
-    cmd << "--access-key #{access_key} "
-    cmd << "--secret-key #{secret_key}"
   end
 
   def stack_name
@@ -33,14 +31,6 @@ class CfnMetadataLoader
 
   def resource_name
     get_metadata_value 'stack', 'RESOURCE_NAME'
-  end
-
-  def access_key
-    get_metadata_value 'instance_user', 'ACCESS_KEY'
-  end
-
-  def secret_key
-    get_metadata_value 'instance_user', 'SECRET_KEY'
   end
 
   def metadata_location

@@ -10,7 +10,7 @@
     "Role": {
       "Type": "String",
       "Default": "example",
-      "Description": "Role to apply to instances."
+      "Description": "Chef role to apply to instances."
     },
     "MaximumInstances": {
       "Type": "String",
@@ -117,31 +117,72 @@
 
   "Resources": {
 
-    "InstanceUser": {
+    "RootRole": {
+       "Type": "AWS::IAM::Role",
+       "Properties": {
+          "AssumeRolePolicyDocument": {
+             "Statement": [ {
+                "Effect": "Allow",
+                "Principal": {
+                   "Service": [ "ec2.amazonaws.com" ]
+                },
+                "Action": [ "sts:AssumeRole" ]
+             } ]
+          },
+          "Path": "/"
+       }
+    },
+
+    "RolePolicies": {
+       "Type": "AWS::IAM::Policy",
+       "Properties": {
+          "PolicyName": "root",
+          "PolicyDocument": {
+            "Statement":[
+              {
+                "Effect": "Allow",
+                "Action": "cloudformation:DescribeStackResource",
+                "Resource": "*"
+              }
+            ] 
+          },
+          "Roles": [ { "Ref": "RootRole" } ]
+       }
+    },
+
+    "RootInstanceProfile": {
+       "Type": "AWS::IAM::InstanceProfile",
+       "Properties": {
+          "Path": "/",
+          "Roles": [ { "Ref": "RootRole" } ]
+       }
+    },
+
+    "S3User": {
       "Type": "AWS::IAM::User",
       "Properties": {
         "Path": "/",
-        "Policies": [{
-          "PolicyName": "instance_user_access",
-          "PolicyDocument": { "Statement":[{
-            "Effect": "Allow",
-            "Action": "cloudformation:DescribeStackResource",
-            "Resource": "*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [ "s3:Get*", "s3:List*" ],
-              "Resource": "*"
+        "Policies": [
+          {
+            "PolicyName": "s3_access",
+            "PolicyDocument": { 
+              "Statement":[
+                {
+                  "Effect": "Allow",
+                  "Action": [ "s3:Get*", "s3:List*" ],
+                  "Resource": "*"
+                }
+              ]
             }
-          ]}
-        }]
+          }
+        ]
       }
     },
 
-    "InstanceUserKey": {
+    "S3UserKey": {
       "Type": "AWS::IAM::AccessKey",
       "Properties": {
-        "UserName": {"Ref": "InstanceUser"}
+        "UserName": {"Ref": "S3User"}
       }
     },
 
@@ -229,8 +270,6 @@
         "app_environment": { "Ref": "Environment" },
         "app_environment_secret": { "Ref": "EnvironmentSecret" },
         "chef_repo_url": { "Ref": "ChefRepoURL" },
-        "instance_access_key": { "Ref": "InstanceUserKey" },
-        "instance_secret_key": { "Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey"] },
         "region": { "Ref": "AWS::Region" },
         "role": { "Ref": "Role" },
         "stack_name": { "Ref": "AWS::StackName" },
@@ -258,15 +297,6 @@
                 "group": "root"
               },
 
-              "/etc/intu_metadata.d/instance_user": {
-                "content": { "Fn::Join": [ "", [ "ACCESS_KEY=", { "Ref": "InstanceUserKey" }, "\n",
-                                                 "SECRET_KEY=", { "Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey" ]}, "\n"
-                           ]]},
-                "mode": "000400",
-                "owner": "root",
-                "group": "root"
-              },
-
               "/etc/intu_metadata.d/stack": {
                 "content": { "Fn::Join": [ "", [ "NAME=", { "Ref": "AWS::StackName" }, "\n",
                                                  "REGION=", { "Ref": "AWS::Region" }, "\n",
@@ -282,8 +312,8 @@
 
               "/root/.s3cfg": {
                 "content": { "Fn::Join": ["", [
-                  "access_key = ", { "Ref": "InstanceUserKey" }, "\n",
-                  "secret_key = ", {"Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey"]}, "\n"
+                  "access_key = ", { "Ref": "S3UserKey" }, "\n",
+                  "secret_key = ", {"Fn::GetAtt": ["S3UserKey", "SecretAccessKey"]}, "\n"
                 ]]},
                 "mode"   : "000400",
                 "owner"  : "root",
@@ -337,6 +367,7 @@
       "Properties": {
         "KeyName": { "Ref": "KeyName" },
         "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]},
+        "IamInstanceProfile": { "Ref": "RootInstanceProfile" },
         "InstanceType": { "Ref": "InstanceType" },
         "SecurityGroups": [
           { "Ref": "InstancesSecurityGroup" }
@@ -348,8 +379,6 @@
           "/opt/aws/bin/cfn-init -s ", { "Ref": "AWS::StackName" },
             " -r InstanceLaunchConfig",
             " --region=", { "Ref": "AWS::Region" },
-            " --access-key=", { "Ref": "InstanceUserKey" },
-            " --secret-key=", { "Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey"] }, 
             " -c bootstrap", "\n",
 
           "/opt/aws/bin/cfn-signal -e ", { "Fn::FindInMap": [ "BootstrapSettingMap", "abort", { "Ref": "Abort" } ] },

@@ -1,0 +1,5 @@
+## Head:
+
+* Added IAM role for reading metadata to CF template
+* Switch cookbooks/ohai/files/default/plugins/cfn.rb to read creds from EC2 role
+* Initial commit
