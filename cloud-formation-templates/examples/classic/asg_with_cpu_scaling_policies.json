@@ -1,0 +1,404 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Auto scaling group with CPU Scaling Thresholds",
+
+  "Parameters": {
+    "AppName": {
+      "Type": "String",
+      "Description": "Name of app to deploy."
+    },
+    "Role": {
+      "Type": "String",
+      "Default": "example",
+      "Description": "Role to apply to instances."
+    },
+    "MaximumInstances": {
+      "Type": "String",
+      "Description": "Maximum number of app instances.",
+      "Default": "1"
+    },
+    "MinimumInstances": {
+      "Type": "String",
+      "Description": "Minimum number of app instances.",
+      "Default": "1"
+    },
+    "CPUScaleUpPeriod" : {
+      "Type": "String",
+      "Description": "CPU Scale Up period in minutes (will trigger after 2 evaluations)",
+      "Default": "300"
+    },
+    "CPUScaleUpThreshold" : {
+      "Type": "String",
+      "Description": "CPU Scale Up threshold as % CPU",
+      "Default": "50"
+    },
+    "CPUScaleDownThreshold" : {
+      "Type": "String",
+      "Description": "CPU Scale Down threshold as % CPU",
+      "Default": "40"
+    },
+    "CPUScaleUpAdjustment" : {
+      "Type": "String",
+      "Description": "Number of instances to add when scaling up",
+      "Default": "1"
+    },
+    "Abort": {
+      "Description": "Should the entire deployment be aborted if bootstraping fails?",
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": [ "yes", "no" ],
+      "ConstraintDescription": "yes or no"
+    },
+    "AppArtifactURL": {
+      "Type": "String",
+      "Description": "S3 URL to the app artifact"
+    },
+    "ChefRepoURL": {
+      "Type": "String",
+      "Description": "S3 URL to the chef repo artifact"
+    },
+    "EnvironmentSecret" : {
+      "Description" : "Databag encryption secret for given environment.",
+      "Type" : "String"
+    },
+    "Environment": {
+      "Type": "String",
+      "Description": "The environment for this stack.",
+      "Default": "development",
+      "AllowedValues": [ "production", "development" ],
+      "ConstraintDescription": "production or development"
+    },
+    "KeyName" : {
+      "Description" : "Key pair name for instance",
+      "Default": "control",
+      "Type" : "String"
+    },
+    "InstanceType" : {
+      "Description" : "EC2 instance type",
+      "Type" : "String",
+      "Default" : "m1.medium",
+      "AllowedValues" : [ "m1.small","m1.medium","m1.large","m1.xlarge",
+                          "m2.xlarge", "m2.2xlarge", "m2.4xlarge",
+                          "c1.medium", "c1.xlarge" ],
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+    }
+  },
+
+  "Mappings": {
+    "BootstrapSettingMap": {
+      "abort": { "yes": "$?", "no": "0" }
+    },
+
+    "RegionMap" : {
+      "us-east-1" : { "AMI" : "ami-1624987f" },
+      "us-west-1" : { "AMI" : "ami-1bf9de5e" },
+      "us-west-2" : { "AMI" : "ami-2a31bf1a" }
+    },
+
+    "S3Map": {
+      "us-east-1": { "s3": "s3:/",
+                     "http": "http://s3.amazonaws.com",
+                     "https": "https://s3.amazonaws.com",
+                     "endpoint": "s3.amazonaws.com"
+      },
+      "us-west-1": { "s3": "s3:/",
+                     "http": "http://s3-us-west-1.amazonaws.com",
+                     "https": "https://s3-us-west-1.amazonaws.com",
+                     "endpoint": "s3-us-west-1.amazonaws.com"
+
+      },
+      "us-west-2": { "s3": "s3:/",
+                     "http": "http://s3-us-west-2.amazonaws.com",
+                     "https": "https://s3-us-west-2.amazonaws.com",
+                     "endpoint": "s3-us-west-2.amazonaws.com"
+      }
+    }
+  },
+
+  "Resources": {
+
+    "InstanceUser": {
+      "Type": "AWS::IAM::User",
+      "Properties": {
+        "Path": "/",
+        "Policies": [{
+          "PolicyName": "instance_user_access",
+          "PolicyDocument": { "Statement":[{
+            "Effect": "Allow",
+            "Action": "cloudformation:DescribeStackResource",
+            "Resource": "*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [ "s3:Get*", "s3:List*" ],
+              "Resource": "*"
+            }
+          ]}
+        }]
+      }
+    },
+
+    "InstanceUserKey": {
+      "Type": "AWS::IAM::AccessKey",
+      "Properties": {
+        "UserName": {"Ref": "InstanceUser"}
+      }
+    },
+
+    "AppCPUAlarmHigh": {
+     "Type": "AWS::CloudWatch::Alarm",
+     "Properties": {
+        "AlarmDescription": "Scale-up if CPU exceeds threshold for 2 evaluations",
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Statistic": "Average",
+        "Period": { "Ref" : "CPUScaleUpPeriod" },
+        "EvaluationPeriods": "2",
+        "Threshold": { "Ref" : "CPUScaleUpThreshold" },
+        "AlarmActions": [ { "Ref": "AppServerScaleUpPolicy" } ],
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": { "Ref": "Instances" }
+          }
+        ],
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    },
+
+    "AppCPUAlarmLow": {
+     "Type": "AWS::CloudWatch::Alarm",
+     "Properties": {
+        "AlarmDescription": "Scale-down if CPU is below threshold for 2 evaluations",
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Statistic": "Average",
+        "Period": "300",
+        "EvaluationPeriods": "2",
+        "Threshold": { "Ref" : "CPUScaleDownThreshold" },
+        "AlarmActions": [ { "Ref": "AppServerScaleDownPolicy" } ],
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": { "Ref": "Instances" }
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold"
+      }
+    },
+
+    "AppServerScaleUpPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "ChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "Instances" },
+        "Cooldown" : "600", 
+        "ScalingAdjustment" : { "Ref" : "CPUScaleUpAdjustment" }
+      }
+    },
+
+    "AppServerScaleDownPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "ChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "Instances" },
+        "Cooldown" : "60",
+        "ScalingAdjustment" : "-1"
+      }
+    },
+
+    "Instances": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "AvailabilityZones": { "Fn::GetAZs": "" },
+        "LaunchConfigurationName": { "Ref": "InstanceLaunchConfig" },
+        "MaxSize": { "Ref": "MaximumInstances" },
+        "MinSize": { "Ref": "MinimumInstances" },
+        "Tags": [ {
+          "Key": "Name",
+          "Value": { "Ref": "AWS::StackName" } ,
+          "PropagateAtLaunch": "true" }
+        ]
+      }
+    },
+
+    "InstanceLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "app_artifact_url": { "Ref": "AppArtifactURL" },
+        "app_environment": { "Ref": "Environment" },
+        "app_environment_secret": { "Ref": "EnvironmentSecret" },
+        "chef_repo_url": { "Ref": "ChefRepoURL" },
+        "instance_access_key": { "Ref": "InstanceUserKey" },
+        "instance_secret_key": { "Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey"] },
+        "region": { "Ref": "AWS::Region" },
+        "role": { "Ref": "Role" },
+        "stack_name": { "Ref": "AWS::StackName" },
+
+        "AWS::CloudFormation::Init": {
+          "configSets" : {
+            "bootstrap" : [ "1", "2", "3" ]
+          },
+
+          "1" : {
+            "commands": {
+              "1_enable_epel" : {
+                "command" : "yum-config-manager --enable epel"
+              }
+            }
+          },
+
+          "2" : {
+            "files": {
+
+              "/etc/intu_metadata.d/instance_role": {
+                "content": { "Fn::Join": [ "", [ "ROLE=", { "Ref": "Role" }, "\n"] ] },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+
+              "/etc/intu_metadata.d/instance_user": {
+                "content": { "Fn::Join": [ "", [ "ACCESS_KEY=", { "Ref": "InstanceUserKey" }, "\n",
+                                                 "SECRET_KEY=", { "Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey" ]}, "\n"
+                           ]]},
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+
+              "/etc/intu_metadata.d/stack": {
+                "content": { "Fn::Join": [ "", [ "NAME=", { "Ref": "AWS::StackName" }, "\n",
+                                                 "REGION=", { "Ref": "AWS::Region" }, "\n",
+                                                 "RESOURCE_NAME=InstanceLaunchConfig", "\n",
+                                                 { "Fn::Join": [ "", [ "INTU_ARTIFACTS_BUCKET=intu-artifacts-", { "Ref": "AWS::Region" } ]]}, "\n",
+                                                 { "Fn::Join": [ "", [ "APP_ARTIFACTS_BUCKET=", { "Ref": "AppName" }, "-", { "Ref": "AWS::Region" } ]]}, "\n",
+                                                 { "Fn::Join": [ "", [ "S3_ENDPOINT=", { "Fn::FindInMap": ["S3Map", { "Ref": "AWS::Region" }, "endpoint" ] } ] ] }
+                           ]]},
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+
+              "/root/.s3cfg": {
+                "content": { "Fn::Join": ["", [
+                  "access_key = ", { "Ref": "InstanceUserKey" }, "\n",
+                  "secret_key = ", {"Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey"]}, "\n"
+                ]]},
+                "mode"   : "000400",
+                "owner"  : "root",
+                "group"  : "root"
+              }
+
+            },
+
+            "packages": {
+              "yum" : {
+                "s3cmd" : {}
+              }
+            },
+
+            "commands": {
+              "1_create_chef_dir" : {
+                "command" : "mkdir -p -m 0700 /var/chef"
+              },
+              "2_install_chef" : {
+                "command" : "curl -L https://www.opscode.com/chef/install.sh | bash"
+              },
+              "3_download_chef_repo" : {
+                "command" : { "Fn::Join": [ "", [ "s3cmd get ", { "Ref": "ChefRepoURL" }, " /var/tmp/chef_repo.tar.gz" ] ] },
+                "env"     : { "HOME" : "/root" }
+              },
+              "4_extract_chef_repo" : {
+                "command" : "tar zxvf /var/tmp/chef_repo.tar.gz -C /var/chef"
+              },
+              "5_run_chef" : {
+                "command" : "/var/chef/script/configure.sh",
+                "cwd"     : "/var/chef",
+                "env"     : { "CHEF_REPO_URL" : { "Ref": "ChefRepoURL" }, 
+                              "HOME"          : "/root",
+                              "PATH"          : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
+              }
+            }
+          },
+
+          "3" : {
+            "commands": {
+              "1_disable_epel" : {
+                "command" : "yum-config-manager --disable epel"
+              },
+              "2_cleanup_files" : {
+                "command" : "rm -rf /var/tmp/chef_repo.tar.gz"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "KeyName": { "Ref": "KeyName" },
+        "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]},
+        "InstanceType": { "Ref": "InstanceType" },
+        "SecurityGroups": [
+          { "Ref": "InstancesSecurityGroup" }
+        ],
+        "UserData": { "Fn::Base64": { "Fn::Join": ["", [
+          "#!/bin/bash\n",
+          "yum update -y aws-cfn-bootstrap\n",
+
+          "/opt/aws/bin/cfn-init -s ", { "Ref": "AWS::StackName" },
+            " -r InstanceLaunchConfig",
+            " --region=", { "Ref": "AWS::Region" },
+            " --access-key=", { "Ref": "InstanceUserKey" },
+            " --secret-key=", { "Fn::GetAtt": ["InstanceUserKey", "SecretAccessKey"] }, 
+            " -c bootstrap", "\n",
+
+          "/opt/aws/bin/cfn-signal -e ", { "Fn::FindInMap": [ "BootstrapSettingMap", "abort", { "Ref": "Abort" } ] },
+            " '", { "Ref": "InstancesWaitHandle" }, "'\n"
+        ]]}}
+      }
+    },
+
+    "InstancesWaitHandle": {
+      "Type": "AWS::CloudFormation::WaitConditionHandle",
+      "Properties": {}
+    },
+
+    "InstancesWaitCondition": {
+      "Type": "AWS::CloudFormation::WaitCondition",
+      "DependsOn": [ "InstanceLaunchConfig", "Instances" ],
+      "Properties": {
+        "Handle": { "Ref": "InstancesWaitHandle" },
+        "Count": "1",
+        "Timeout": "900"
+      }
+    },
+
+    "InstancesSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security Group for the app the instance",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "22",
+            "ToPort" : "22",
+            "CidrIp" : "0.0.0.0/0"
+          },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "80",
+            "ToPort" : "80",
+            "CidrIp" : "0.0.0.0/0"
+          }
+        ]
+      }
+    }
+  },
+
+  "Outputs": {
+    "InstanceAutoScalingGroup": {
+      "Value": { "Ref": "Instances" },
+      "Description": "App Instances Auto Scaling Group ID"
+    }
+  }
+}
