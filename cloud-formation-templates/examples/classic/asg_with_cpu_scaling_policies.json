@@ -164,7 +164,7 @@
         "Path": "/",
         "Policies": [
           {
-            "PolicyName": "instance_user_access",
+            "PolicyName": "s3_access",
             "PolicyDocument": { 
               "Statement":[
                 {
