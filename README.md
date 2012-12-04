@@ -28,3 +28,8 @@ Getting Started
 ===============
 
 Seeing the [Getting Started](https://github.com/intuit/liftoff/wiki/GettingStarted) section of the Wiki.
+
+Documentation
+=============
+
+All documentation is kept in the [Liftoff Wiki](https://github.com/intuit/liftoff/wiki)
