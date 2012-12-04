@@ -27,4 +27,4 @@ Prerequisites
 Getting Started
 ===============
 
-Seeing the [Getting Started](https://github.com/wiki/intuit/liftoff/GettingStarted.md) section of the Wiki.
+Seeing the [Getting Started](https://github.com/intuit/liftoff/wiki/GettingStarted) section of the Wiki.
