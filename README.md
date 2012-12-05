@@ -19,6 +19,7 @@ Technologies
 Prerequisites
 =============
   
+* MAC OSX or Linux.
 * Git installed.
 * Ruby version 1.9.2 or greater with the **bundler** gem installed.
 * You have an AWS account and have created an API key and secret.
