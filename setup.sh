@@ -3,6 +3,7 @@
 DIR=`pwd`
 DATABAG_PASSWORD=password
 
+# Verify the instance meets necessary checks
 . ./check.sh
 
 # Read app name
