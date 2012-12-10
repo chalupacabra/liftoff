@@ -20,6 +20,10 @@ if [ $? -ne 0 ]; then
   echo "Unable to setup heirloom app."
   exit 1
 fi
+
+# Hack until https://github.com/intuit/heirloom/issues/100 is closed
+sleep 5
+
 echo "Creating Chef Repo Heirloom for $APP"
 heirloom setup -b $APP -n $APP-chef-repo -r us-west-1 -r us-west-2 -r us-east-1 -l warn
 if [ $? -ne 0 ]; then
@@ -49,7 +53,7 @@ echo
 
 echo "#1. Launch auto scaling group:"
 echo
-echo "simple_deploy create -e preprod -n $APP-01 -t $DIR/cloud-formation-templates/examples/classic/asg_with_cpu_scaling_policies.json -a AppName=$APP -a EnvironmentSecret=$DATABAG_PASSWORD -a MinimumAppInstances=1 -a MaximumAppInstances=1 -a KeyName=$KEY_NAME -a app=v1.0.0 -a chef_repo=v1.0.0 -a app_domain=$APP-app -a chef_repo_domain=$APP-chef-repo -a app_bucket_prefix=$APP -a chef_repo_bucket_prefix=$APP"
+echo "simple_deploy create -e preprod -n $APP-01 -t $DIR/cloud-formation-templates/examples/classic/asg_with_cpu_scaling_policies.json -a AppName=$APP -a EnvironmentSecret=$DATABAG_PASSWORD -a KeyName=$KEY_NAME -a app=v1.0.0 -a chef_repo=v1.0.0 -a app_domain=$APP-app -a chef_repo_domain=$APP-chef-repo -a app_bucket_prefix=$APP -a chef_repo_bucket_prefix=$APP"
 echo
 echo "#2. Upload a new version of $DIR/app:"
 echo
