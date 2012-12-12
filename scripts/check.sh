@@ -13,7 +13,7 @@ if [ ! `which git` ]; then
 fi
 
 if [ ! `which ruby` ]; then
-  echo "Ruby must be installed."
+  echo "Error: Ruby must be installed."
   exit 1
 fi
 
@@ -33,4 +33,9 @@ if [ ! `which simple_deploy` ]; then
   exit 1
 fi
 
-echo "All Good!"
+if [ ! `which composer` ]; then
+  echo "Error: Composer must be installed."
+  exit 1
+fi
+
+echo "All required components required to perform setup."

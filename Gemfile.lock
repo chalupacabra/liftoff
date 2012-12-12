@@ -1,6 +1,11 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    aws-sdk (1.7.1)
+      httparty (~> 0.7)
+      json (~> 1.4)
+      nokogiri (>= 1.4.4)
+      uuidtools (~> 2.1)
     builder (3.1.4)
     bunny (0.7.9)
     capistrano (2.13.5)
@@ -27,6 +32,8 @@ GEM
       treetop (~> 1.4.9)
       uuidtools
       yajl-ruby (~> 1.1)
+    composer (0.0.2)
+      aws-sdk (= 1.7.1)
     erubis (2.7.0)
     eventmachine (1.0.0)
     excon (0.16.10)
@@ -52,6 +59,9 @@ GEM
       xml-simple (~> 1.1.2)
     highline (1.6.15)
     http_parser.rb (0.5.3)
+    httparty (0.9.0)
+      multi_json (~> 1.0)
+      multi_xml
     ipaddress (0.8.0)
     json (1.6.1)
     knife-solo_data_bag (0.3.0)
@@ -63,7 +73,8 @@ GEM
     mixlib-log (1.4.1)
     mixlib-shellout (1.1.0)
     moneta (0.6.0)
-    multi_json (1.4.0)
+    multi_json (1.5.0)
+    multi_xml (0.5.1)
     multipart-post (1.1.5)
     net-scp (1.0.4)
       net-ssh (>= 1.99.1)
@@ -87,13 +98,13 @@ GEM
     rest-client (1.6.7)
       mime-types (>= 1.16)
     ruby-hmac (0.4.0)
-    simple_deploy (0.6.2)
+    simple_deploy (0.6.3)
       capistrano (= 2.13.5)
-      stackster (= 0.3.2)
+      stackster (= 0.4.0)
       tinder (= 1.9.1)
       trollop (= 2.0)
     simple_oauth (0.1.9)
-    stackster (0.3.2)
+    stackster (0.4.0)
       fog (= 1.6.0)
       trollop (= 2.0)
       xml-simple (= 1.1.2)
@@ -125,6 +136,7 @@ PLATFORMS
 
 DEPENDENCIES
   chef (= 10.16.2)
+  composer (= 0.0.2)
   heirloom (= 0.9.0)
   knife-solo_data_bag (= 0.3.0)
-  simple_deploy (= 0.6.2)
+  simple_deploy (= 0.6.3)
