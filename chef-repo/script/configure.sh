@@ -84,37 +84,12 @@ function download_and_extract_chef_repo {
 
 function ensure_chef_is_installed {
   if [ $(rpm -qa | grep -v grep | grep -i chef | wc -l ) -eq 0 ]; then
-    download_and_install_chef
+    log_error_and_exit "Chef must be installed."
   fi
 }
 
 function ensure_tmp_location_exists {
   mkdir -p $CONFIGURE_TMP
-}
-
-function download_and_install_chef {
-  log_info "Chef is not installed"
-  if [ ! ${CHEF_PACKAGE_URL:+x} ]; then
-    log_error_and_exit "Unable to download chef as the environment variable 'CHEF_PACAKGE_URL' is not set"
-  fi
-
-  log_info 'Downloading chef package'
-  download_file $CHEF_PACKAGE_URL "$CONFIGURE_TMP/chef.rpm"
-  log_info 'Chef package downloaded'
-
-  log_info 'Installing chef package'
-  if ! output=`yum install -y $CONFIGURE_TMP/chef.rpm 2>&1`; then
-    log_error "$output"
-    log_error_and_exit 'Error installing chef package'
-  fi
-  log_info 'Chef package installed'
-
-  log_info 'Removing chef package'
-  if ! output=`rm $CONFIGURE_TMP/chef.rpm 2>&1`; then
-    log_error "$output"
-    log_error_and_exit 'Error removing package'
-  fi
-  log_info 'Chef package removed'
 }
 
 function ensure_mandatory_env_vars {
