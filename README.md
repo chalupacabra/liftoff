@@ -1,9 +1,9 @@
-Lift Off is a collection of Cloud Formation Templates, Chef Repo and configuration scripts which leverages Intuit's Open Source Build and Deploy tools to quickly deploy Chef configured instances on Amazon Linux.
+Lift Off is a collection of Cloud Formation Templates, Chef Repo and configuration scripts which helps you quickly get started with Intuit's Open Cloud Management tools.
 
 How To Use This Repo
 ====================
 
-This repo is a starting point and meant to be forked and included in your local source and evolved with your project.
+This repo is a starting point and meant to be forked and included in your local source control.
 
 Getting Started
 ===============
