@@ -1,4 +1,4 @@
-Lift Off is a collection of Cloud Formation Templates, Chef Repo and configuration scripts which helps you quickly get started with Intuit's Open Cloud Management tools.
+Lift Off is a collection of Cloud Formation Templates, Chef Repo and configuration scripts which helps you quickly get started with Intuit's Cloud Management tools.
 
 How To Use This Repo
 ====================
