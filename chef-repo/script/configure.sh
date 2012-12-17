@@ -21,7 +21,7 @@ function show_help {
   echo 'This scripts expects the following environment variables to be set:'
   echo 'CHEF_REPO_URL (mandatory)'
   echo 'CONFIGURE_ROLE (optional)'
-  echo 'SECRET (optional)'
+  echo 'CHEF_REPO_SECRET (optional)'
   echo "CHEF_PACKAGE_URL (optional) - This is only optional if chef is already installed.  Otherwise, it's mandatory."
   echo ''
 }
@@ -43,15 +43,15 @@ function decrypt_archive {
   encrypted_archive_path=$1
   decrypted_archive_path=$2
 
-  if [ ! ${SECRET:+x} ]; then
-    echo "* SECRET is a required variable when archive is encrypted."
+  if [ ! ${CHEF_REPO_SECRET:+x} ]; then
+    echo "* CHEF_REPO_SECRET is a required variable when archive is encrypted."
     echo ""
     show_help
     exit 1
   fi
 
   log_info "Decrypting $encrypted_archive_path archive to $decrypted_archive_path"
-  `gpg --batch --yes --cipher-algo AES256 --passphrase $SECRET --output $decrypted_archive_path $encrypted_archive_path`
+  `gpg --batch --yes --cipher-algo AES256 --passphrase $CHEF_REPO_SECRET --output $decrypted_archive_path $encrypted_archive_path`
   log_info "Decrypted $encrypted_archive_path archive to $decrypted_archive_path"
 
   log_info "Removing encrypted archive ($encrypted_archive_path)"

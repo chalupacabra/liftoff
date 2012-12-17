@@ -257,10 +257,10 @@
               "6_run_chef" : {
                 "command" : "/var/chef/script/configure.sh",
                 "cwd"     : "/var/chef",
-                "env"     : { "CHEF_REPO_URL" : { "Ref": "ChefRepoURL" }, 
-                              "SECRET"        : { "Ref": "ChefRepoSecret" },
-                              "HOME"          : "/root",
-                              "PATH"          : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
+                "env"     : { "CHEF_REPO_URL"    : { "Ref": "ChefRepoURL" }, 
+                              "CHEF_REPO_SECRET" : { "Ref": "ChefRepoSecret" },
+                              "HOME"             : "/root",
+                              "PATH"             : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
               }
             }
           },
