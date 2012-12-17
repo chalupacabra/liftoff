@@ -4,6 +4,7 @@ set -e
 
 METADATA_PATH=/etc/intu_metadata.d
 DEFAULT_ROLE_FILE="$METADATA_PATH/instance_role"
+DEFAULT_CHEF_REPO_SECRET_FILE="$METADATA_PATH/chef_repo_secret"
 CHEF_DIR=/var/chef
 CHEF_CACHE_DIR=$CHEF_DIR/cache
 CHEF_CONFIG_DIR=$CHEF_DIR/config
@@ -21,9 +22,21 @@ function show_help {
   echo 'This scripts expects the following environment variables to be set:'
   echo 'CHEF_REPO_URL (mandatory)'
   echo 'CONFIGURE_ROLE (optional)'
-  echo 'CHEF_REPO_SECRET (optional)'
   echo "CHEF_PACKAGE_URL (optional) - This is only optional if chef is already installed.  Otherwise, it's mandatory."
   echo ''
+}
+
+function determine_chef_repo_secret {
+  if [ ! -f $DEFAULT_CHEF_REPO_SECRET_FILE ]; then
+    log_error_and_exit "Error determining the default secret from '$DEFAULT_CHEF_REPO_SECRET_FILE'"
+  fi
+
+  if [ `grep -c CHEF_REPO_SECRET $DEFAULT_CHEF_REPO_SECRET_FILE` -ne 1 ]; then
+    log_error_and_exit "Unable to determine the secret in $DEFAULT_CHEF_REPO_SECRET_FILE"
+  fi
+
+  export `grep CHEF_REPO_SECRET $DEFAULT_CHEF_REPO_SECRET_FILE`
+  log_info "Determined the default secret"
 }
 
 function determine_default_role {
@@ -43,12 +56,7 @@ function decrypt_archive {
   encrypted_archive_path=$1
   decrypted_archive_path=$2
 
-  if [ ! ${CHEF_REPO_SECRET:+x} ]; then
-    echo "* CHEF_REPO_SECRET is a required variable when archive is encrypted."
-    echo ""
-    show_help
-    exit 1
-  fi
+  determine_chef_repo_secret
 
   log_info "Decrypting $encrypted_archive_path archive to $decrypted_archive_path"
   `gpg --batch --yes --cipher-algo AES256 --passphrase $CHEF_REPO_SECRET --output $decrypted_archive_path $encrypted_archive_path`

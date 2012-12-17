@@ -205,6 +205,13 @@
                 "group": "root"
               },
 
+              "/etc/intu_metadata.d/chef_repo_secret": {
+                "content": { "Fn::Join": [ "", [ "CHEF_REPO_SECRET=", { "Ref": "ChefRepoSecret" }, "\n"] ] },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+
               "/etc/intu_metadata.d/stack": {
                 "content": { "Fn::Join": [ "", [ "NAME=", { "Ref": "AWS::StackName" }, "\n",
                                                  "REGION=", { "Ref": "AWS::Region" }, "\n",
@@ -258,7 +265,6 @@
                 "command" : "/var/chef/script/configure.sh",
                 "cwd"     : "/var/chef",
                 "env"     : { "CHEF_REPO_URL"    : { "Ref": "ChefRepoURL" }, 
-                              "CHEF_REPO_SECRET" : { "Ref": "ChefRepoSecret" },
                               "HOME"             : "/root",
                               "PATH"             : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
               }
