@@ -21,6 +21,7 @@ function show_help {
   echo 'This scripts expects the following environment variables to be set:'
   echo 'CHEF_REPO_URL (mandatory)'
   echo 'CONFIGURE_ROLE (optional)'
+  echo 'SECRET (optional)'
   echo "CHEF_PACKAGE_URL (optional) - This is only optional if chef is already installed.  Otherwise, it's mandatory."
   echo ''
 }
@@ -36,6 +37,26 @@ function determine_default_role {
 
   export `grep ROLE $DEFAULT_ROLE_FILE`
   log_info "Determined the default role"
+}
+
+function decrypt_archive {
+  encrypted_archive_path=$1
+  decrypted_archive_path=$2
+
+  if [ ! ${SECRET:+x} ]; then
+    echo "* SECRET is a required variable when archive is encrypted."
+    echo ""
+    show_help
+    exit 1
+  fi
+
+  log_info "Decrypting $encrypted_archive_path archive to $decrypted_archive_path"
+  `gpg --batch --yes --cipher-algo AES256 --passphrase $SECRET --output $decrypted_archive_path $encrypted_archive_path`
+  log_info "Decrypted $encrypted_archive_path archive to $decrypted_archive_path"
+
+  log_info "Removing encrypted archive ($encrypted_archive_path)"
+  rm -fr $encrypted_archive_path
+  log_info "Encrypted archive ($encrypted_archive_path) removed"
 }
 
 function download_file {
@@ -62,9 +83,17 @@ function download_and_extract_archive {
   log_info "Downloaded $1 archive"
 
   file_name=`basename "$2"`
-  archive_path="$CONFIGURE_TMP/$file_name"
-  log_info "Extracting $1 archive ($archive_path)"
-  if ! output=`tar zxf $archive_path -C $CHEF_DIR 2>&1`; then
+  decrypted_file_name=`echo $file_name | sed -e 's/\.gpg$//g'`
+
+  # Only decrypt archive if it end in '.gpg'
+  if [ "$decrypted_file_name" != "$file_name" ]; then
+    decrypt_archive $file_name $decrypted_file_name
+  fi
+
+  archive_path="$CONFIGURE_TMP/$decrypted_file_name"
+
+  log_info "Extracting $1 archive ($decrypted_file_name)"
+  if ! output=`tar zxf $decrypted_file_name -C $CHEF_DIR 2>&1`; then
     log_error "$output"
     log_error_and_exit "Error extracting $1"
   fi

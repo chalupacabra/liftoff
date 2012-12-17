@@ -32,7 +32,7 @@ end
 
 artifact_uri = URI.parse node['intu_metadata']['app']['artifact_url']
 
-s3cmd_file "#{Chef::Config[:file_cache_path]}/app.tar.gz" do
+s3cmd_file "#{Chef::Config[:file_cache_path]}/app.tar.gz.gpg" do
   action :download
   bucket node['intu_metadata']['stack']['app_artifacts_bucket']
   object_name artifact_uri.path
@@ -40,6 +40,9 @@ s3cmd_file "#{Chef::Config[:file_cache_path]}/app.tar.gz" do
   group node['intu']['app']['group']
   mode '0600'
 end
+
+decryption_command = "gpg --batch --yes --cipher-algo AES256 --passphrase #{node['intu_metadata']['stack']['app_artifacts_url']}  --output #{Chef::Config[:file_cache_path]}/app.tar.gz #{Chef::Config[:file_cache_path]}/app.tar.gz.gpg"
+execute decryption_command
 
 directory app_artifact_dir do
   recursive true

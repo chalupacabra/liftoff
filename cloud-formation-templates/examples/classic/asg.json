@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Auto scaling group with CPU Scaling Thresholds",
+  "Description": "Starter Auto Scaling Group",
 
   "Parameters": {
     "AppName": {
@@ -22,26 +22,6 @@
       "Description": "Minimum number of app instances.",
       "Default": "1"
     },
-    "CPUScaleUpPeriod" : {
-      "Type": "String",
-      "Description": "CPU Scale Up period in minutes (will trigger after 2 evaluations)",
-      "Default": "300"
-    },
-    "CPUScaleUpThreshold" : {
-      "Type": "String",
-      "Description": "CPU Scale Up threshold as % CPU",
-      "Default": "50"
-    },
-    "CPUScaleDownThreshold" : {
-      "Type": "String",
-      "Description": "CPU Scale Down threshold as % CPU",
-      "Default": "40"
-    },
-    "CPUScaleUpAdjustment" : {
-      "Type": "String",
-      "Description": "Number of instances to add when scaling up",
-      "Default": "1"
-    },
     "Abort": {
       "Description": "Should the entire deployment be aborted if bootstraping fails?",
       "Type": "String",
@@ -59,6 +39,14 @@
     },
     "EnvironmentSecret" : {
       "Description" : "Databag encryption secret for given environment.",
+      "Type" : "String"
+    },
+    "AppSecret" : {
+      "Description" : "Secret used for encrypting App stored in S3 by Heirloom.",
+      "Type" : "String"
+    },
+    "ChefRepoSecret" : {
+      "Description" : "Secret used for encrypting Chef Repo stored in S3 by Heirloom.",
       "Type" : "String"
     },
     "Environment": {
@@ -93,25 +81,6 @@
       "us-east-1" : { "AMI" : "ami-1624987f" },
       "us-west-1" : { "AMI" : "ami-1bf9de5e" },
       "us-west-2" : { "AMI" : "ami-2a31bf1a" }
-    },
-
-    "S3Map": {
-      "us-east-1": { "s3": "s3:/",
-                     "http": "http://s3.amazonaws.com",
-                     "https": "https://s3.amazonaws.com",
-                     "endpoint": "s3.amazonaws.com"
-      },
-      "us-west-1": { "s3": "s3:/",
-                     "http": "http://s3-us-west-1.amazonaws.com",
-                     "https": "https://s3-us-west-1.amazonaws.com",
-                     "endpoint": "s3-us-west-1.amazonaws.com"
-
-      },
-      "us-west-2": { "s3": "s3:/",
-                     "http": "http://s3-us-west-2.amazonaws.com",
-                     "https": "https://s3-us-west-2.amazonaws.com",
-                     "endpoint": "s3-us-west-2.amazonaws.com"
-      }
     }
   },
 
@@ -186,68 +155,6 @@
       }
     },
 
-    "AppCPUAlarmHigh": {
-     "Type": "AWS::CloudWatch::Alarm",
-     "Properties": {
-        "AlarmDescription": "Scale-up if CPU exceeds threshold for 2 evaluations",
-        "MetricName": "CPUUtilization",
-        "Namespace": "AWS/EC2",
-        "Statistic": "Average",
-        "Period": { "Ref" : "CPUScaleUpPeriod" },
-        "EvaluationPeriods": "2",
-        "Threshold": { "Ref" : "CPUScaleUpThreshold" },
-        "AlarmActions": [ { "Ref": "AppServerScaleUpPolicy" } ],
-        "Dimensions": [
-          {
-            "Name": "AutoScalingGroupName",
-            "Value": { "Ref": "Instances" }
-          }
-        ],
-        "ComparisonOperator": "GreaterThanThreshold"
-      }
-    },
-
-    "AppCPUAlarmLow": {
-     "Type": "AWS::CloudWatch::Alarm",
-     "Properties": {
-        "AlarmDescription": "Scale-down if CPU is below threshold for 2 evaluations",
-        "MetricName": "CPUUtilization",
-        "Namespace": "AWS/EC2",
-        "Statistic": "Average",
-        "Period": "300",
-        "EvaluationPeriods": "2",
-        "Threshold": { "Ref" : "CPUScaleDownThreshold" },
-        "AlarmActions": [ { "Ref": "AppServerScaleDownPolicy" } ],
-        "Dimensions": [
-          {
-            "Name": "AutoScalingGroupName",
-            "Value": { "Ref": "Instances" }
-          }
-        ],
-        "ComparisonOperator": "LessThanThreshold"
-      }
-    },
-
-    "AppServerScaleUpPolicy" : {
-      "Type" : "AWS::AutoScaling::ScalingPolicy",
-      "Properties" : {
-        "AdjustmentType" : "ChangeInCapacity",
-        "AutoScalingGroupName" : { "Ref" : "Instances" },
-        "Cooldown" : "600", 
-        "ScalingAdjustment" : { "Ref" : "CPUScaleUpAdjustment" }
-      }
-    },
-
-    "AppServerScaleDownPolicy" : {
-      "Type" : "AWS::AutoScaling::ScalingPolicy",
-      "Properties" : {
-        "AdjustmentType" : "ChangeInCapacity",
-        "AutoScalingGroupName" : { "Ref" : "Instances" },
-        "Cooldown" : "60",
-        "ScalingAdjustment" : "-1"
-      }
-    },
-
     "Instances": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
@@ -267,6 +174,7 @@
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
         "app_artifact_url": { "Ref": "AppArtifactURL" },
+        "app_archive_secret": { "Ref": "AppSecret" },
         "app_environment": { "Ref": "Environment" },
         "app_environment_secret": { "Ref": "EnvironmentSecret" },
         "chef_repo_url": { "Ref": "ChefRepoURL" },
@@ -301,9 +209,7 @@
                 "content": { "Fn::Join": [ "", [ "NAME=", { "Ref": "AWS::StackName" }, "\n",
                                                  "REGION=", { "Ref": "AWS::Region" }, "\n",
                                                  "RESOURCE_NAME=InstanceLaunchConfig", "\n",
-                                                 { "Fn::Join": [ "", [ "INTU_ARTIFACTS_BUCKET=intu-artifacts-", { "Ref": "AWS::Region" } ]]}, "\n",
-                                                 { "Fn::Join": [ "", [ "APP_ARTIFACTS_BUCKET=", { "Ref": "AppName" }, "-", { "Ref": "AWS::Region" } ]]}, "\n",
-                                                 { "Fn::Join": [ "", [ "S3_ENDPOINT=", { "Fn::FindInMap": ["S3Map", { "Ref": "AWS::Region" }, "endpoint" ] } ] ] }
+                                                 { "Fn::Join": [ "", [ "APP_ARTIFACTS_BUCKET=", { "Ref": "AppName" }, "-", { "Ref": "AWS::Region" } ]]}, "\n"
                            ]]},
                 "mode": "000400",
                 "owner": "root",
@@ -336,16 +242,23 @@
                 "command" : "curl -L https://www.opscode.com/chef/install.sh | bash"
               },
               "3_download_chef_repo" : {
-                "command" : { "Fn::Join": [ "", [ "s3cmd get ", { "Ref": "ChefRepoURL" }, " /var/tmp/chef_repo.tar.gz" ] ] },
+                "command" : { "Fn::Join": [ "", [ "s3cmd get ", { "Ref": "ChefRepoURL" }, " /var/tmp/chef_repo.tar.gz.gpg" ] ] },
                 "env"     : { "HOME" : "/root" }
               },
-              "4_extract_chef_repo" : {
+              "4_decrypt_chef_repo" : {
+                "command" : { "Fn::Join": [ "", [ "gpg --batch --yes --cipher-algo AES256 --passphrase ",
+                                                  { "Ref": "ChefRepoSecret" },
+                                                  " --output /var/tmp/chef_repo.tar.gz ",
+                                                  "/var/tmp/chef_repo.tar.gz.gpg" ] ] }
+              },
+              "5_extract_chef_repo" : {
                 "command" : "tar zxvf /var/tmp/chef_repo.tar.gz -C /var/chef"
               },
-              "5_run_chef" : {
+              "6_run_chef" : {
                 "command" : "/var/chef/script/configure.sh",
                 "cwd"     : "/var/chef",
                 "env"     : { "CHEF_REPO_URL" : { "Ref": "ChefRepoURL" }, 
+                              "SECRET"        : { "Ref": "ChefRepoSecret" },
                               "HOME"          : "/root",
                               "PATH"          : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
               }
