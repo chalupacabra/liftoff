@@ -174,9 +174,9 @@
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
         "app_artifact_url": { "Ref": "AppArtifactURL" },
-        "app_secret": { "Ref": "AppSecret" },
         "app_environment": { "Ref": "Environment" },
         "app_environment_secret": { "Ref": "EnvironmentSecret" },
+        "app_secret": { "Ref": "AppSecret" },
         "chef_repo_url": { "Ref": "ChefRepoURL" },
         "region": { "Ref": "AWS::Region" },
         "role": { "Ref": "Role" },
@@ -264,9 +264,9 @@
               "6_run_chef" : {
                 "command" : "/var/chef/script/configure.sh",
                 "cwd"     : "/var/chef",
-                "env"     : { "CHEF_REPO_URL"    : { "Ref": "ChefRepoURL" }, 
-                              "HOME"             : "/root",
-                              "PATH"             : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
+                "env"     : { "CHEF_REPO_URL" : { "Ref": "ChefRepoURL" }, 
+                              "HOME"          : "/root",
+                              "PATH"          : "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin" }
               }
             }
           },
@@ -277,7 +277,7 @@
                 "command" : "yum-config-manager --disable epel"
               },
               "2_cleanup_files" : {
-                "command" : "rm -rf /var/tmp/chef_repo.tar.gz"
+                "command" : "rm -rf /var/tmp/chef_repo.tar.gz /var/tmp/chef_repo.tar.gz.gpg"
               }
             }
           }
