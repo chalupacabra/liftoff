@@ -41,7 +41,10 @@ s3cmd_file "#{Chef::Config[:file_cache_path]}/app.tar.gz.gpg" do
   mode '0600'
 end
 
-decryption_command = "gpg --batch --yes --cipher-algo AES256 --passphrase #{node['intu_metadata']['stack']['app_artifacts_url']}  --output #{Chef::Config[:file_cache_path]}/app.tar.gz #{Chef::Config[:file_cache_path]}/app.tar.gz.gpg"
+decryption_command = "gpg --batch --yes --cipher-algo AES256 --passphrase "
+decryption_command += "#{node['intu_metadata']['app']['secret']} "
+decryption_command += "--output #{Chef::Config[:file_cache_path]}/app.tar.gz "
+decryption_command += "#{Chef::Config[:file_cache_path]}/app.tar.gz.gpg"
 execute decryption_command
 
 directory app_artifact_dir do

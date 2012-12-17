@@ -85,22 +85,23 @@ function download_and_extract_archive {
   file_name=`basename "$2"`
   decrypted_file_name=`echo $file_name | sed -e 's/\.gpg$//g'`
 
+  archive_path="$CONFIGURE_TMP/$file_name"
+  decrypted_archive_path="$CONFIGURE_TMP/$decrypted_file_name"
+
   # Only decrypt archive if it end in '.gpg'
   if [ "$decrypted_file_name" != "$file_name" ]; then
-    decrypt_archive $file_name $decrypted_file_name
+    decrypt_archive $archive_path $decrypted_archive_path
   fi
 
-  archive_path="$CONFIGURE_TMP/$decrypted_file_name"
-
   log_info "Extracting $1 archive ($decrypted_file_name)"
-  if ! output=`tar zxf $decrypted_file_name -C $CHEF_DIR 2>&1`; then
+  if ! output=`tar zxf $decrypted_archive_path -C $CHEF_DIR 2>&1`; then
     log_error "$output"
     log_error_and_exit "Error extracting $1"
   fi
   log_info "Extracted $1 archive"
 
-  log_info "Removing $1 archive ($archive_path)"
-  rm -fr $archive_file
+  log_info "Removing $1 archive ($decrypted_archive_path)"
+  rm -fr $decrypted_archive_file
   log_info "Removed $1 archive"
 }
 
@@ -141,7 +142,7 @@ function run_chef {
 
   log_info "Determined chef role is '$determined_role'"
 
-  # chef-solo command not assigned to variable due to 
+  # chef-solo command not assigned to variable due to
   # issue with override variables not being interpreted correctly on CLI
   log_info "Chef command: chef-solo -c $CHEF_CONFIG_DIR/solo.rb -o \"role[$determined_role]\""
 

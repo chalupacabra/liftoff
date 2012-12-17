@@ -174,7 +174,7 @@
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
         "app_artifact_url": { "Ref": "AppArtifactURL" },
-        "app_archive_secret": { "Ref": "AppSecret" },
+        "app_secret": { "Ref": "AppSecret" },
         "app_environment": { "Ref": "Environment" },
         "app_environment_secret": { "Ref": "EnvironmentSecret" },
         "chef_repo_url": { "Ref": "ChefRepoURL" },
