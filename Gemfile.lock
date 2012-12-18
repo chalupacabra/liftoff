@@ -32,7 +32,7 @@ GEM
       treetop (~> 1.4.9)
       uuidtools
       yajl-ruby (~> 1.1)
-    composer (0.0.3)
+    composer (0.0.5)
       aws-sdk (= 1.7.1)
     erubis (2.7.0)
     eventmachine (1.0.0)
@@ -53,7 +53,7 @@ GEM
       ruby-hmac
     formatador (0.2.4)
     hashie (1.2.0)
-    heirloom (0.9.0)
+    heirloom (0.10.0)
       fog (~> 1.6.0)
       trollop (= 2.0)
       xml-simple (~> 1.1.2)
@@ -98,7 +98,7 @@ GEM
     rest-client (1.6.7)
       mime-types (>= 1.16)
     ruby-hmac (0.4.0)
-    simple_deploy (0.6.3)
+    simple_deploy (0.6.4)
       capistrano (= 2.13.5)
       stackster (= 0.4.0)
       tinder (= 1.9.1)
@@ -136,7 +136,7 @@ PLATFORMS
 
 DEPENDENCIES
   chef (= 10.16.2)
-  composer (= 0.0.3)
-  heirloom (= 0.9.0)
+  composer (= 0.0.5)
+  heirloom (= 0.10.0)
   knife-solo_data_bag (= 0.3.0)
-  simple_deploy (= 0.6.3)
+  simple_deploy (= 0.6.4)

@@ -4,6 +4,7 @@ set -e
 
 METADATA_PATH=/etc/intu_metadata.d
 DEFAULT_ROLE_FILE="$METADATA_PATH/instance_role"
+DEFAULT_CHEF_REPO_SECRET_FILE="$METADATA_PATH/chef_repo_secret"
 CHEF_DIR=/var/chef
 CHEF_CACHE_DIR=$CHEF_DIR/cache
 CHEF_CONFIG_DIR=$CHEF_DIR/config
@@ -25,6 +26,19 @@ function show_help {
   echo ''
 }
 
+function determine_chef_repo_secret {
+  if [ ! -f $DEFAULT_CHEF_REPO_SECRET_FILE ]; then
+    log_error_and_exit "Error determining the default secret from '$DEFAULT_CHEF_REPO_SECRET_FILE'"
+  fi
+
+  if [ `grep -c CHEF_REPO_SECRET $DEFAULT_CHEF_REPO_SECRET_FILE` -ne 1 ]; then
+    log_error_and_exit "Unable to determine the secret in $DEFAULT_CHEF_REPO_SECRET_FILE"
+  fi
+
+  export `grep CHEF_REPO_SECRET $DEFAULT_CHEF_REPO_SECRET_FILE`
+  log_info "Determined the default secret"
+}
+
 function determine_default_role {
   if [ ! -f $DEFAULT_ROLE_FILE ]; then
     log_error_and_exit "Error determining the default role from '$DEFAULT_ROLE_FILE'"
@@ -36,6 +50,21 @@ function determine_default_role {
 
   export `grep ROLE $DEFAULT_ROLE_FILE`
   log_info "Determined the default role"
+}
+
+function decrypt_archive {
+  encrypted_archive_path=$1
+  decrypted_archive_path=$2
+
+  determine_chef_repo_secret
+
+  log_info "Decrypting $encrypted_archive_path archive to $decrypted_archive_path"
+  `gpg --batch --yes --cipher-algo AES256 --passphrase $CHEF_REPO_SECRET --output $decrypted_archive_path $encrypted_archive_path`
+  log_info "Decrypted $encrypted_archive_path archive to $decrypted_archive_path"
+
+  log_info "Removing encrypted archive ($encrypted_archive_path)"
+  rm -fr $encrypted_archive_path
+  log_info "Encrypted archive ($encrypted_archive_path) removed"
 }
 
 function download_file {
@@ -62,16 +91,25 @@ function download_and_extract_archive {
   log_info "Downloaded $1 archive"
 
   file_name=`basename "$2"`
+  decrypted_file_name=`echo $file_name | sed -e 's/\.gpg$//g'`
+
   archive_path="$CONFIGURE_TMP/$file_name"
-  log_info "Extracting $1 archive ($archive_path)"
-  if ! output=`tar zxf $archive_path -C $CHEF_DIR 2>&1`; then
+  decrypted_archive_path="$CONFIGURE_TMP/$decrypted_file_name"
+
+  # Only decrypt archive if it end in '.gpg'
+  if [ "$decrypted_file_name" != "$file_name" ]; then
+    decrypt_archive $archive_path $decrypted_archive_path
+  fi
+
+  log_info "Extracting $1 archive ($decrypted_file_name)"
+  if ! output=`tar zxf $decrypted_archive_path -C $CHEF_DIR 2>&1`; then
     log_error "$output"
     log_error_and_exit "Error extracting $1"
   fi
   log_info "Extracted $1 archive"
 
-  log_info "Removing $1 archive ($archive_path)"
-  rm -fr $archive_file
+  log_info "Removing $1 archive ($decrypted_archive_path)"
+  rm -fr $decrypted_archive_file
   log_info "Removed $1 archive"
 }
 
@@ -112,7 +150,7 @@ function run_chef {
 
   log_info "Determined chef role is '$determined_role'"
 
-  # chef-solo command not assigned to variable due to 
+  # chef-solo command not assigned to variable due to
   # issue with override variables not being interpreted correctly on CLI
   log_info "Chef command: chef-solo -c $CHEF_CONFIG_DIR/solo.rb -o \"role[$determined_role]\""
 

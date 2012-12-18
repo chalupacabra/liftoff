@@ -12,6 +12,11 @@ if [ ! `which git` ]; then
   exit 1
 fi
 
+if [ ! `which tar` ]; then
+  echo "Error: Tar must be installed."
+  exit 1
+fi
+
 if [ ! `which ruby` ]; then
   echo "Error: Ruby must be installed."
   exit 1
