@@ -6,7 +6,7 @@ SECRET=$3
 REGION=us-west-1
 
 function help {
-  echo "usage: setup.sh APP_NAME EXISTING_SSH_KEY"
+  echo "usage: setup.sh APP_NAME EXISTING_SSH_KEY_NAME ENCRYPTION_SECRET"
 }
 
 if [ "$APP" == "" ]; then
