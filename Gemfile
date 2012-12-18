@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'composer', '0.0.3'
+gem 'composer', '0.0.4'
 gem 'heirloom', '0.10.0'
 gem 'simple_deploy', '0.6.3'
 gem 'chef', '10.16.2'

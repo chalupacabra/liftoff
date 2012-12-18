@@ -39,15 +39,18 @@
     },
     "EnvironmentSecret" : {
       "Description" : "Databag encryption secret for given environment.",
-      "Type" : "String"
+      "Type" : "String",
+      "NoEcho": "true"
     },
     "AppSecret" : {
       "Description" : "Secret used for encrypting App stored in S3 by Heirloom.",
-      "Type" : "String"
+      "Type" : "String",
+      "NoEcho": "true"
     },
     "ChefRepoSecret" : {
       "Description" : "Secret used for encrypting Chef Repo stored in S3 by Heirloom.",
-      "Type" : "String"
+      "Type" : "String",
+      "NoEcho": "true"
     },
     "Environment": {
       "Type": "String",
