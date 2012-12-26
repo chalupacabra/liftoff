@@ -12,6 +12,11 @@ if [ ! `which git` ]; then
   exit 1
 fi
 
+if [ ! `which gpg` ]; then
+  echo "Error: GPG must be installed."
+  exit 1
+fi
+
 if [ ! `which tar` ]; then
   echo "Error: Tar must be installed."
   exit 1
