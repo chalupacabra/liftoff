@@ -161,6 +161,10 @@ function run_chef {
 
 }
 
+function update_chef_dir_ownership {
+  chown -R root:root $CHEF_DIR
+}
+
 function log_error {
   logger -p user.err -t "configure_script" "$1"
   echo "$1"
@@ -208,6 +212,8 @@ if [ -z "$CONFIGURE_RECURSED" ]; then
 fi
 
 ensure_chef_is_installed
+
+update_chef_dir_ownership
 
 run_chef
 
