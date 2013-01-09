@@ -1,12 +1,32 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    activemodel (3.2.11)
+      activesupport (= 3.2.11)
+      builder (~> 3.0.0)
+    activesupport (3.2.11)
+      i18n (~> 0.6)
+      multi_json (~> 1.0)
+    addressable (2.3.2)
+    archive-tar-minitar (0.5.2)
     aws-sdk (1.7.1)
       httparty (~> 0.7)
       json (~> 1.4)
       nokogiri (>= 1.4.4)
       uuidtools (~> 2.1)
-    builder (3.1.4)
+    berkshelf (1.1.1)
+      activesupport
+      chef (>= 10.16.2)
+      chozo (>= 0.2.3)
+      hashie
+      minitar
+      multi_json (>= 1.3.0)
+      ridley (>= 0.6.2)
+      solve (>= 0.4.0.rc1)
+      thor (~> 0.16.0)
+      vagrant (~> 1.0.5)
+      yajl-ruby
+    builder (3.0.4)
     bunny (0.7.9)
     capistrano (2.13.5)
       highline
@@ -14,7 +34,10 @@ GEM
       net-sftp (>= 2.0.0)
       net-ssh (>= 2.0.14)
       net-ssh-gateway (>= 1.1.0)
-    chef (10.16.2)
+    celluloid (0.12.4)
+      facter (>= 1.6.12)
+      timers (>= 1.0.0)
+    chef (10.16.4)
       bunny (>= 0.6.0, < 0.8.0)
       erubis
       highline (>= 1.6.9)
@@ -24,7 +47,7 @@ GEM
       mixlib-config (>= 1.1.2)
       mixlib-log (>= 1.3.0)
       mixlib-shellout
-      moneta
+      moneta (< 0.7.0)
       net-ssh (~> 2.2.2)
       net-ssh-multi (~> 1.1.0)
       ohai (>= 0.6.0)
@@ -32,15 +55,25 @@ GEM
       treetop (~> 1.4.9)
       uuidtools
       yajl-ruby (~> 1.1)
+    childprocess (0.3.6)
+      ffi (~> 1.0, >= 1.0.6)
+    chozo (0.3.0)
+      activesupport (>= 3.2.0)
+      hashie
+      multi_json (>= 1.3.0)
     composer (0.0.7)
       aws-sdk (= 1.7.1)
     erubis (2.7.0)
-    eventmachine (1.0.0)
+    eventmachine (0.12.10)
     excon (0.16.10)
-    faraday (0.8.4)
+    facter (1.6.17)
+    faraday (0.7.6)
+      addressable (~> 2.2)
       multipart-post (~> 1.1)
-    faraday_middleware (0.9.0)
-      faraday (>= 0.7.4, < 0.9)
+      rack (~> 1.1)
+    faraday_middleware (0.7.0)
+      faraday (~> 0.7.3)
+    ffi (1.3.0)
     fog (1.6.0)
       builder
       excon (~> 0.14)
@@ -62,10 +95,13 @@ GEM
     httparty (0.9.0)
       multi_json (~> 1.0)
       multi_xml
+    i18n (0.6.1)
     ipaddress (0.8.0)
-    json (1.6.1)
+    json (1.5.4)
     knife-solo_data_bag (0.3.0)
+    log4r (1.1.10)
     mime-types (1.19)
+    minitar (0.5.4)
     mixlib-authentication (1.3.0)
       mixlib-log
     mixlib-cli (1.2.2)
@@ -76,6 +112,7 @@ GEM
     multi_json (1.5.0)
     multi_xml (0.5.1)
     multipart-post (1.1.5)
+    net-http-persistent (2.8)
     net-scp (1.0.4)
       net-ssh (>= 1.99.1)
     net-sftp (2.0.5)
@@ -86,7 +123,7 @@ GEM
     net-ssh-multi (1.1)
       net-ssh (>= 2.1.4)
       net-ssh-gateway (>= 0.99.0)
-    nokogiri (1.5.5)
+    nokogiri (1.5.6)
     ohai (6.14.0)
       ipaddress
       mixlib-cli
@@ -95,26 +132,45 @@ GEM
       systemu
       yajl-ruby
     polyglot (0.3.3)
+    rack (1.4.3)
     rest-client (1.6.7)
       mime-types (>= 1.16)
+    ridley (0.6.2)
+      activemodel (>= 3.2.0)
+      activesupport (>= 3.2.0)
+      addressable
+      celluloid
+      chozo (>= 0.2.2)
+      erubis
+      faraday
+      json (>= 1.5.0)
+      mixlib-authentication
+      mixlib-log
+      multi_json (>= 1.0.4)
+      net-http-persistent (>= 2.8)
+      net-ssh
     ruby-hmac (0.4.0)
-    simple_deploy (0.6.5)
+    simple_deploy (0.6.6)
       capistrano (= 2.13.5)
       stackster (= 0.4.1)
-      tinder (= 1.9.1)
+      tinder (= 1.8.0)
       trollop (= 2.0)
     simple_oauth (0.1.9)
+    solve (0.4.1)
+      json
     stackster (0.4.1)
       fog (= 1.6.0)
       trollop (= 2.0)
       xml-simple (= 1.1.2)
     systemu (2.5.2)
-    tinder (1.9.1)
-      eventmachine (>= 0.12.0, < 2)
-      faraday (~> 0.8)
-      faraday_middleware (~> 0.8)
+    thor (0.16.0)
+    timers (1.0.2)
+    tinder (1.8.0)
+      activesupport (>= 2.3, < 4)
+      eventmachine (~> 0.12)
+      faraday (>= 0.6, < 0.8)
+      faraday_middleware (>= 0.6, < 0.8)
       hashie (~> 1.0)
-      json (~> 1.6)
       mime-types (~> 1.16)
       multi_json (~> 1.0)
       multipart-post (~> 1.1)
@@ -128,6 +184,15 @@ GEM
       http_parser.rb (~> 0.5.1)
       simple_oauth (~> 0.1.4)
     uuidtools (2.1.3)
+    vagrant (1.0.5)
+      archive-tar-minitar (= 0.5.2)
+      childprocess (~> 0.3.1)
+      erubis (~> 2.7.0)
+      i18n (~> 0.6.0)
+      json (~> 1.5.1)
+      log4r (~> 1.1.9)
+      net-scp (~> 1.0.4)
+      net-ssh (~> 2.2.2)
     xml-simple (1.1.2)
     yajl-ruby (1.1.0)
 
@@ -135,8 +200,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  chef (= 10.16.2)
+  berkshelf (= 1.1.1)
   composer (= 0.0.7)
   heirloom (= 0.10.0)
   knife-solo_data_bag (= 0.3.0)
-  simple_deploy (= 0.6.5)
+  simple_deploy (= 0.6.6)
