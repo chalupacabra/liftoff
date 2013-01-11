@@ -48,4 +48,9 @@ if [ ! `which composer` ]; then
   exit 1
 fi
 
+if [ ! `which berks` ]; then
+  echo "Error: Berkshelf must be installed."
+  exit 1
+fi
+
 echo "All required components required to perform setup."

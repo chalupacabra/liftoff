@@ -1,5 +1,6 @@
 ## Head:
 
+* Berkshelfing cookbooks into vendor/cookbooks
 * Add update chef dir ownership to configure.sh
 * Updated to composer 0.0.6
 * Switching to compose gem for setup
