@@ -8,7 +8,7 @@ This repo is a starting point and meant to be forked and included in your local 
 Getting Started
 ===============
 
-Seeing the [Getting Started](https://github.com/intuit/liftoff/wiki/GettingStarted) section of the Wiki.
+Seeing the [Getting Started](https://github.com/intuit/liftoff/wiki/Getting%20Started) section of the Wiki.
 
 Documentation
 =============
