@@ -249,7 +249,7 @@
                 "command" : "mkdir -p -m 0700 /var/chef"
               },
               "2_install_chef" : {
-                "command" : "curl -L https://www.opscode.com/chef/install.sh | bash"
+                "command" : "curl -L https://www.opscode.com/chef/install.sh | bash /dev/stdin -v 10.20.0"
               },
               "3_download_chef_repo" : {
                 "command" : { "Fn::Join": [ "", [ "s3cmd get ", { "Ref": "ChefRepoURL" }, " /var/tmp/chef_repo.tar.gz.gpg" ] ] },
